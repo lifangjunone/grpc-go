@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package hello;
+
+option go_package="grpc-go/simple";
+
+service HelloService {
+  rpc Hello(Request) returns (Response);
+}
+
+
+message Request {
+  string Value = 1;
+}
+
+message Response {
+  string Value = 1;
+}
