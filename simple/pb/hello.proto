@@ -6,6 +6,7 @@ option go_package="grpc-go/simple";
 
 service HelloService {
   rpc Hello(Request) returns (Response);
+  rpc Channel(stream Request) returns (stream Response);
 }
 
 

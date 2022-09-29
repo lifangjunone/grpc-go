@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	simple "grpc-go/simple/pb"
+	"io"
 	"log"
 	"net"
 )
@@ -15,6 +16,30 @@ type HelloServiceServer struct {
 
 func (h *HelloServiceServer) Hello(ctx context.Context, req *simple.Request) (*simple.Response, error) {
 	return &simple.Response{Value: fmt.Sprintf("hello %s", req.Value)}, nil
+}
+
+func (h *HelloServiceServer) Channel(stream simple.HelloService_ChannelServer) error {
+	// loop receive stream
+	for {
+		req, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				log.Printf("channel closed %s", err.Error())
+				return nil
+			}
+			return err
+		}
+		log.Printf("Server receive stream: %s", req.Value)
+		// loop send stream
+		err = stream.Send(&simple.Response{Value: fmt.Sprintf("hello %s", req.Value)})
+		if err != nil {
+			if err == io.EOF {
+				log.Println("channel closed")
+				return nil
+			}
+			return err
+		}
+	}
 }
 
 func main() {

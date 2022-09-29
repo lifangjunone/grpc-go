@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	simple "grpc-go/simple/pb"
+	"io"
+	"log"
+	"time"
 )
 
 func main() {
@@ -19,4 +22,33 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(rsp.Value)
+	// stream example
+	stream, err := client.Channel(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	// send stream
+	go func() {
+		for {
+			if err := stream.Send(&simple.Request{Value: "ldd"}); err != nil {
+				if err == io.EOF {
+					log.Println("server closed")
+				}
+				return
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
+	// receive steam
+	for {
+		rsp, err = stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				log.Println("server closed")
+			}
+			return
+		}
+		log.Printf("Client receive stream %s", rsp.Value)
+		time.Sleep(2 * time.Second)
+	}
 }
