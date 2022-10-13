@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"grpc-go/middleware/server"
 	simple "grpc-go/simple/pb"
 	"io"
 	"log"
@@ -44,7 +45,12 @@ func (h *HelloServiceServer) Channel(stream simple.HelloService_ChannelServer) e
 
 func main() {
 	// create a grpc server
-	grpcSvc := grpc.NewServer()
+	unaryInter := grpc.UnaryInterceptor(server.NewAuthUnaryInterceptor())
+	streamInter := grpc.StreamInterceptor(server.NewAuthStreamInterceptor())
+	grpcSvc := grpc.NewServer(
+		unaryInter,
+		streamInter,
+	)
 	// register HelloServer to grpc service
 	simple.RegisterHelloServiceServer(grpcSvc, new(HelloServiceServer))
 	// listen server
