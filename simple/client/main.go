@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"grpc-go/middleware/server"
+	client2 "grpc-go/middleware/client"
 	simple "grpc-go/simple/pb"
 	"io"
 	"log"
@@ -13,22 +12,24 @@ import (
 )
 
 func main() {
+	// 为客户端添加认证信息
+	credentialInfo := grpc.WithPerRPCCredentials(client2.NewAuthentication("admin", "123456"))
 	// 建立网络链接
-	conn, err := grpc.DialContext(context.Background(), "127.0.0.1:1234", grpc.WithInsecure())
+	conn, err := grpc.DialContext(context.Background(), "127.0.0.1:1234", grpc.WithInsecure(), credentialInfo)
 	if err != nil {
 		panic(err)
 	}
 	client := simple.NewHelloServiceClient(conn)
-	md := server.NewClientAuth("admin", "123456")
-	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	rsp, err := client.Hello(ctx, &simple.Request{Value: "ldd"})
+	// md := server.NewClientAuth("admin", "123456")
+	// ctx := metadata.NewOutgoingContext(context.Background(), md)
+	rsp, err := client.Hello(context.Background(), &simple.Request{Value: "ldd"})
 	if err != nil {
 		fmt.Printf("call is failed %#v", err.Error())
 		return
 	}
 	fmt.Println(rsp.Value)
 	// stream example
-	stream, err := client.Channel(ctx)
+	stream, err := client.Channel(context.Background())
 	if err != nil {
 		fmt.Printf("call is failed %#v", err.Error())
 	}
